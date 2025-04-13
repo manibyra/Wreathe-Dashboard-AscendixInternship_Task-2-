@@ -2,7 +2,7 @@ async function getWeather(cityFromHistory = null) {
   const city = cityFromHistory || document.getElementById('cityInput').value.trim();
   if (!city) return alert("Please enter a city name");
 
-  const apiKey = '46b0a13f3c488c29cfeb6dc74201f8b6';
+  const apiKey = 'your_new_apikey';#add your OPENWEATHERMAP_API_KEY
   const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
 
   document.getElementById('loading').style.display = 'block';
