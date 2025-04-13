@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather Dashboard</title>
+  <style>
+    :root {
+      --bg-light: linear-gradient(135deg, #3acbf2, #7a60ff);
+      --bg-dark: linear-gradient(135deg, #1a1a2e, #16213e);
+      --text-light: #ffffff;
+      --text-dark: #f0f0f0;
+      --box-bg-light: rgba(255, 255, 255, 0.2);
+      --box-bg-dark: rgba(0, 0, 0, 0.3);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      min-height: 100vh;
+      background: var(--bg-light);
+      color: var(--text-light);
+      transition: background 0.4s, color 0.4s;
+    }
+
+    .dark-mode {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    input {
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      width: 60%;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin-left: 10px;
+      border: none;
+      background: #4b00ff;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .theme-toggle {
+      float: right;
+      background: transparent;
+      border: 1px solid white;
+    }
+
+    .weather-info, .forecast {
+      margin-top: 20px;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info-boxes, .forecast-cards {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .info-box, .forecast-card {
+      background: var(--box-bg-light);
+      padding: 10px;
+      border-radius: 10px;
+      flex: 1;
+      margin: 10px 5px;
+      min-width: 28%;
+      text-align: center;
+    }
+
+    .dark-mode .info-box, .dark-mode .forecast-card {
+      background: var(--box-bg-dark);
+    }
+
+    ul#historyList {
+      list-style: none;
+      padding-left: 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    ul#historyList li {
+      background: #ffffff22;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+    <h1>Weather Dashboard</h1>
+    <input type="text" id="cityInput" placeholder="Enter City Name" />
+    <button onclick="getWeather()">Get Weather</button>
+
+    <ul id="historyList"></ul>
+
+    <div id="weatherResult" class="weather-info"></div>
+    <div id="forecastResult" class="forecast"></div>
+  </div>
+
+  <script>
+    const apiKey = '46b0a13f3c488c29cfeb6dc74201f8b6';
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    async function getWeather(cityFromHistory = null) {
+      const city = cityFromHistory || document.getElementById('cityInput').value.trim();
+      if (!city) return alert("Please enter a city name");
+
+      const urlCurrent = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+      const urlForecast = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
+
+      try {
+        const [resCurrent, resForecast] = await Promise.all([fetch(urlCurrent), fetch(urlForecast)]);
+        const current = await resCurrent.json();
+        const forecast = await resForecast.json();
+
+        if (current.cod != 200) throw new Error(current.message);
+
+        const localTime = new Date(current.dt * 1000).toLocaleString();
+
+        document.getElementById('weatherResult').innerHTML = `
+          <div class="header-row">
+            <h2>${current.name}</h2>
+            <span>${localTime}</span>
+          </div>
+          <p><strong>${current.weather[0].description}</strong></p>
+          <h1>${current.main.temp}°C</h1>
+          <div class="info-boxes">
+            <div class="info-box">Feels like: ${current.main.feels_like}°C</div>
+            <div class="info-box">Humidity: ${current.main.humidity}%</div>
+            <div class="info-box">Wind: ${current.wind.speed} m/s</div>
+          </div>
+        `;
+
+        const dailyData = forecast.list.filter(item => item.dt_txt.includes("12:00:00")).slice(0, 5);
+        document.getElementById('forecastResult').innerHTML = `
+          <h3>5-Day Forecast</h3>
+          <div class="forecast-cards">
+            ${dailyData.map(day => `
+              <div class="forecast-card">
+                <strong>${new Date(day.dt_txt).toLocaleDateString()}</strong>
+                <p>${day.weather[0].main}</p>
+                <img src="https://openweathermap.org/img/wn/${day.weather[0].icon}.png" />
+                <p>${day.main.temp}°C</p>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        updateHistory(city);
+
+      } catch (err) {
+        document.getElementById('weatherResult').innerHTML =
+          `<p style="color: red;">Error: ${err.message}</p>`;
+        document.getElementById('forecastResult').innerHTML = '';
+      }
+    }
+
+    function updateHistory(city) {
+      let history = JSON.parse(localStorage.getItem('weatherHistory')) || [];
+      if (!history.includes(city)) {
+        history.unshift(city);
+        if (history.length > 5) history.pop();
+        localStorage.setItem('weatherHistory', JSON.stringify(history));
+      }
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem('weatherHistory')) || [];
+      const list = document.getElementById('historyList');
+      list.innerHTML = '';
+      history.forEach(city => {
+        const li = document.createElement('li');
+        li.innerText = city;
+        li.onclick = () => getWeather(city);
+        list.appendChild(li);
+      });
+    }
+
+    window.onload = renderHistory;
+  </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #74ebd5, #acb6e5);
+  color: #333;
+  text-align: center;
+  padding: 40px;
+}
+.container {
+  background: white;
+  padding: 30px;
+  max-width: 500px;
+  margin: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+input, button {
+  padding: 10px;
+  margin: 10px 0;
+  width: 80%;
+  font-size: 16px;
+}
+button {
+  background-color: #0077b6;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.weather-card {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 10px;
+  background: #f1f1f1;
+}
+ul#historyList {
+  list-style: none;
+  padding: 0;
+}
+ul#historyList li {
+  cursor: pointer;
+  text-decoration: underline;
+  margin: 4px 0;
+}
